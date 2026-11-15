@@ -1,0 +1,381 @@
+// PG Management — relational data model.
+//
+// Runs on PostgreSQL (see scripts/db.mjs for the local development server).
+// Status columns are strings validated by Zod at the API boundary.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String // SUPER_ADMIN | PG_OWNER | RESIDENT
+  status       String   @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED | REJECTED
+  avatarUrl    String?
+  resetToken   String?
+  resetTokenAt DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedPgs        Pg[]             @relation("PgOwner")
+  residencies     Residency[]
+  paymentsMade    Payment[]        @relation("PaymentRecorder")
+  complaints      Complaint[]
+  complaintNotes  ComplaintUpdate[]
+  announcements   Announcement[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  invitationsSent PgInvitation[]   @relation("InvitationSender")
+  targets         AnnouncementTarget[]
+  preferences     NotificationPreference?
+}
+
+model Pg {
+  id               String   @id @default(cuid())
+  ownerId          String
+  name             String
+  description      String?
+  address          String
+  city             String
+  state            String
+  pincode          String
+  type             String // BOYS | GIRLS | CO_LIVING
+  rentMin          Int
+  rentMax          Int
+  images           String   @default("[]") // JSON string[]
+  facilities       String   @default("[]") // JSON string[]
+  houseRules       String?
+  checkInRules     String?
+  checkOutRules    String?
+  emergencyName    String?
+  emergencyPhone   String?
+  wifiName         String?
+  wifiPassword     String?
+  wifiInstructions String?
+  waterTimings     String?
+  laundryTimings   String?
+  cleaningSchedule String?
+  electricityInfo  String?
+  visitorRules     String?
+  commonAreaRules  String?
+  notice           String?
+  status           String   @default("PENDING") // PENDING | VERIFIED | SUSPENDED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner          User                   @relation("PgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  floors         Floor[]
+  rooms          Room[]
+  beds           Bed[]
+  residencies    Residency[]
+  rentRecords    RentRecord[]
+  menus          FoodMenu[]
+  complaints     Complaint[]
+  announcements  Announcement[]
+  invitations    PgInvitation[]
+
+  @@index([ownerId])
+}
+
+model Floor {
+  id     String @id @default(cuid())
+  pgId   String
+  name   String
+  level  Int    @default(0)
+  pg     Pg     @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  rooms  Room[]
+  residency Residency[]
+
+  @@index([pgId])
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  pgId       String
+  floorId    String
+  number     String
+  roomType   String   @default("STANDARD")
+  capacity   Int
+  rentPerBed Int
+  amenities  String   @default("[]")
+  status     String   @default("ACTIVE") // ACTIVE | MAINTENANCE
+  createdAt  DateTime @default(now())
+
+  pg         Pg        @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  floor      Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  beds       Bed[]
+  residency  Residency[]
+
+  @@unique([pgId, number])
+  @@index([floorId])
+}
+
+model Bed {
+  id               String  @id @default(cuid())
+  roomId           String
+  pgId             String
+  label            String
+  // Unique pointer guarantees a bed can never hold two active residencies.
+  activeResidencyId String? @unique
+  room             Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  pg               Pg      @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  residencies      Residency[]
+
+  @@unique([roomId, label])
+  @@index([pgId])
+}
+
+model Residency {
+  id              String    @id @default(cuid())
+  residentId      String
+  pgId            String
+  floorId         String
+  roomId          String
+  bedId           String
+  status          String    @default("INVITED") // INVITED | ACTIVE | NOTICE | VACATED | REJECTED
+  monthlyRent     Int
+  securityDeposit Int       @default(0)
+  joinedAt        DateTime?
+  vacatedAt       DateTime?
+  noticeDate      DateTime?
+  exitReason      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  resident     User         @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  pg           Pg           @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  floor        Floor        @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  room         Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  bed          Bed?         @relation(fields: [bedId], references: [id])
+  rentRecords  RentRecord[]
+  complaints   Complaint[]
+
+  @@index([residentId])
+  @@index([pgId, status])
+}
+
+model RentRecord {
+  id           String    @id @default(cuid())
+  residencyId  String
+  pgId         String
+  periodMonth  String // YYYY-MM
+  amountDue    Int
+  amountPaid   Int       @default(0)
+  status       String    @default("UNPAID") // PAID | UNPAID | PARTIAL | OVERDUE
+  dueDate      DateTime
+  paidAt       DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  residency Residency @relation(fields: [residencyId], references: [id], onDelete: Cascade)
+  pg        Pg        @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  payments  Payment[]
+
+  @@unique([residencyId, periodMonth])
+  @@index([pgId, periodMonth])
+}
+
+model Payment {
+  id           String    @id @default(cuid())
+  rentRecordId String
+  amount       Int
+  method       String // CASH | UPI | BANK_TRANSFER | CARD | OTHER
+  reference    String?
+  note         String?
+  paidAt       DateTime  @default(now())
+  recordedById String
+  createdAt    DateTime  @default(now())
+
+  rentRecord RentRecord @relation(fields: [rentRecordId], references: [id], onDelete: Cascade)
+  recordedBy User       @relation("PaymentRecorder", fields: [recordedById], references: [id])
+
+  @@index([rentRecordId])
+}
+
+model FoodMenu {
+  id       String   @id @default(cuid())
+  pgId     String
+  date     String // YYYY-MM-DD
+  note     String?
+  imageUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pg    Pg             @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  items FoodMenuItem[]
+
+  @@unique([pgId, date])
+}
+
+model FoodMenuItem {
+  id          String  @id @default(cuid())
+  menuId      String
+  meal        String // BREAKFAST | LUNCH | SNACKS | DINNER
+  name        String
+  description String?
+  sortOrder   Int     @default(0)
+
+  menu FoodMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@index([menuId])
+}
+
+model Complaint {
+  id          String    @id @default(cuid())
+  pgId        String
+  residentId  String
+  residencyId String?
+  category    String
+  title       String
+  description String
+  images      String    @default("[]")
+  urgency     String    @default("MEDIUM")
+  priority    String    @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  status      String    @default("SUBMITTED")
+  response    String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  pg         Pg                @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  resident   User              @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  residency  Residency?        @relation(fields: [residencyId], references: [id])
+  updates    ComplaintUpdate[]
+
+  @@index([pgId, status])
+}
+
+model ComplaintUpdate {
+  id           String   @id @default(cuid())
+  complaintId  String
+  authorId     String
+  message      String
+  statusFrom   String?
+  statusTo     String?
+  createdAt    DateTime @default(now())
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+
+  @@index([complaintId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  pgId      String
+  authorId  String
+  title     String
+  body      String
+  category  String   @default("GENERAL")
+  audience  String   @default("ALL") // ALL | FLOOR | SELECTED
+  floorId   String?
+  createdAt DateTime @default(now())
+
+  pg       Pg                   @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  author   User                 @relation(fields: [authorId], references: [id])
+  targets  AnnouncementTarget[]
+
+  @@index([pgId])
+}
+
+model AnnouncementTarget {
+  id             String       @id @default(cuid())
+  announcementId String
+  userId         String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model NotificationPreference {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  rentReminders     Boolean @default(true)
+  announcements     Boolean @default(true)
+  menuUpdates       Boolean @default(true)
+  complaintUpdates  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PgInvitation {
+  id          String    @id @default(cuid())
+  pgId        String
+  floorId     String
+  roomId      String
+  bedId       String
+  invitedById String
+  code        String    @unique
+  email       String?
+  phone       String?
+  residentId  String?
+  status      String    @default("PENDING") // PENDING | ACCEPTED | DECLINED | CANCELLED
+  monthlyRent Int
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  pg        Pg   @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  invitedBy User @relation("InvitationSender", fields: [invitedById], references: [id])
+
+  @@index([pgId, status])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  action      String
+  entityType  String
+  entityId    String?
+  description String
+  meta        String?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  body      String
+  status    String   @default("QUEUED") // QUEUED | SENT | FAILED
+  error     String?
+  category  String   @default("GENERAL")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
