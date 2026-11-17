@@ -97,6 +97,8 @@ export default function OwnerPgs() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -225,7 +227,10 @@ export default function OwnerPgs() {
               <Input placeholder="Sunrise Residency" {...register("name")} error={!!errors.name} />
             </Field>
             <Field label="PG type" error={errors.type?.message}>
-              <Select {...register("type")}>
+              <Select
+                value={watch("type")}
+                onChange={(event) => setValue("type", event.target.value as FormValues["type"], { shouldValidate: true })}
+              >
                 <option value="BOYS">Boys PG</option>
                 <option value="GIRLS">Girls PG</option>
                 <option value="CO_LIVING">Co-living</option>

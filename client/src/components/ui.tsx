@@ -1,5 +1,8 @@
 import {
+  Children,
+  Fragment,
   createContext,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
@@ -9,13 +12,15 @@ import {
   useRef,
   useState,
   type ButtonHTMLAttributes,
+  type ChangeEvent,
   type InputHTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, CheckCircle2, ChevronDown, Loader2, Moon, Search, Sun, Upload, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ChevronDown, Loader2, Moon, Search, Sun, Upload, X } from "lucide-react";
 import { api } from "../lib/api";
 
 export const cn = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(" ");
@@ -235,18 +240,210 @@ export function Textarea({
   return <textarea className={cn("field min-h-[96px] resize-y", error && "field-error", className)} {...props} />;
 }
 
+interface SelectOption {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
+}
+
+/** Reads the <option> children a caller already passes, so every call site keeps its markup. */
+function collectOptions(nodes: ReactNode, into: SelectOption[]) {
+  Children.forEach(nodes, (child) => {
+    if (!isValidElement(child)) return;
+    if (child.type === Fragment) {
+      collectOptions((child.props as { children?: ReactNode }).children, into);
+      return;
+    }
+    if (child.type === "option") {
+      const props = child.props as { value?: string | number; disabled?: boolean; children?: ReactNode };
+      into.push({ value: String(props.value ?? ""), label: props.children, disabled: props.disabled });
+    }
+  });
+  return into;
+}
+
+/**
+ * A dropdown drawn by the app instead of a native <select popup>. The native
+ * popup never opens on every phone/browser combination, so the list is a real
+ * element rendered into <body> and positioned against the trigger.
+ */
 export function Select({
   error,
   className,
   children,
+  value,
+  onChange,
+  disabled,
+  "aria-label": ariaLabel,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { error?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const [box, setBox] = useState<{ left: number; top?: number; bottom?: number; width: number; maxHeight: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const options = useMemo(() => collectOptions(children, []), [children]);
+  const selected = String(value ?? "");
+  const current = options.find((option) => option.value === selected);
+
+  const place = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const flip = below < 220 && above > below;
+    const maxHeight = Math.min(288, Math.max(132, flip ? above : below));
+    setBox(
+      flip
+        ? { left: rect.left, bottom: window.innerHeight - rect.top + 6, width: rect.width, maxHeight }
+        : { left: rect.left, top: rect.bottom + 6, width: rect.width, maxHeight }
+    );
+  }, []);
+
+  const commit = (option: SelectOption) => {
+    if (option.disabled) return;
+    // Callers read event.target.value, the same as they did from a <select>.
+    onChange?.({ target: { value: option.value } } as unknown as ChangeEvent<HTMLSelectElement>);
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    place();
+    const onOutside = (event: Event) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || listRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onReflow = () => place();
+    document.addEventListener("mousedown", onOutside);
+    document.addEventListener("touchstart", onOutside, { passive: true });
+    window.addEventListener("resize", onReflow);
+    window.addEventListener("scroll", onReflow, true);
+    return () => {
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("touchstart", onOutside);
+      window.removeEventListener("resize", onReflow);
+      window.removeEventListener("scroll", onReflow, true);
+    };
+  }, [open, place]);
+
+  const openList = () => {
+    setActive(Math.max(0, options.findIndex((option) => option.value === selected)));
+    setOpen(true);
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Escape") {
+      if (open) {
+        event.stopPropagation();
+        setOpen(false);
+      }
+      return;
+    }
+    if (!open) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openList();
+      }
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      let next = active;
+      for (let i = 0; i < options.length; i += 1) {
+        next = (next + step + options.length) % options.length;
+        if (!options[next].disabled) break;
+      }
+      setActive(next);
+      (listRef.current?.children[next] as HTMLElement | undefined)?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      if (options[active]) commit(options[active]);
+      return;
+    }
+    if (event.key === "Tab") setOpen(false);
+  };
+
   return (
-    <div className="relative">
-      <select className={cn("field appearance-none pr-9", error && "field-error", className)} {...props}>
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+    <div className="w-full">
+      <button
+        type="button"
+        ref={triggerRef}
+        {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => (open ? setOpen(false) : openList())}
+        onKeyDown={onKeyDown}
+        className={cn(
+          "field flex items-center justify-between gap-2 text-left",
+          !current && "text-ink-muted",
+          error && "field-error",
+          className
+        )}
+      >
+        <span className="truncate">{current?.label ?? "Select"}</span>
+        <ChevronDown
+          className={cn("h-4 w-4 shrink-0 text-ink-muted transition-transform duration-150", open && "rotate-180")}
+          aria-hidden
+        />
+      </button>
+
+      {open && box
+        ? createPortal(
+            <div
+              ref={listRef}
+              role="listbox"
+              aria-label={ariaLabel}
+              style={{
+                position: "fixed",
+                left: box.left,
+                top: box.top,
+                bottom: box.bottom,
+                width: box.width,
+                maxHeight: box.maxHeight,
+                zIndex: 200,
+              }}
+              className="overflow-y-auto rounded-2xl border border-ink/10 bg-surface p-1 shadow-lift animate-pop-in"
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === selected;
+                return (
+                  <button
+                    key={`${option.value}-${index}`}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    disabled={option.disabled}
+                    onMouseEnter={() => setActive(index)}
+                    onClick={() => commit(option)}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition-colors",
+                      isSelected
+                        ? "bg-lime text-[#141928] dark:bg-primary dark:text-white"
+                        : active === index
+                          ? "bg-ink/[0.06] text-ink"
+                          : "text-ink-soft",
+                      option.disabled && "cursor-not-allowed opacity-40"
+                    )}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {isSelected ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
