@@ -11,7 +11,7 @@
     "dev": "concurrently -n api,web -c magenta,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "build": "npm run build --prefix server && npm run build --prefix client",
     "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
-    "start": "npm run start --prefix server",
+    "start": "cd server && npx prisma db push --skip-generate && node dist/index.js",
     "db:init": "npm run db:init --prefix server",
     "db:start": "npm run db:start --prefix server",
     "db:stop": "npm run db:stop --prefix server",

@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import express from "express";
 import cors from "cors";
@@ -33,6 +34,17 @@ export function createApp() {
   app.use("/api", announcementRoutes);
   app.use("/api", notificationRoutes);
   app.use("/api/resident", residentRoutes);
+
+  // In production the built React app is served by this same process, so a
+  // single container/host can run the whole product.
+  const clientDist = path.join(__dirname, "../../client/dist");
+  if (fs.existsSync(path.join(clientDist, "index.html"))) {
+    app.use(express.static(clientDist, { index: false, maxAge: "1h" }));
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) return next();
+      res.sendFile(path.join(clientDist, "index.html"));
+    });
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);

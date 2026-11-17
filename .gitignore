@@ -8,6 +8,7 @@ build/
 server/prisma/*.db
 server/prisma/*.db-journal
 server/uploads/
+uploads/
 client/dist/
 
 # local PostgreSQL data and dev mail sink
