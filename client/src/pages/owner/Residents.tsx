@@ -399,9 +399,19 @@ export default function OwnerResidents() {
         }
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="PG" className="sm:col-span-2">
+          <Field
+            label="PG"
+            className="sm:col-span-2"
+            hint={
+              pgsQuery.isError
+                ? "Could not load your properties. Close this and try again."
+                : !pgsQuery.isLoading && !(pgsQuery.data?.pgs ?? []).length
+                  ? "You have no properties yet. Create one under My PGs first."
+                  : undefined
+            }
+          >
             <Select value={addForm.pgId} onChange={(event) => setAddForm({ ...addForm, pgId: event.target.value, bedId: "", monthlyRent: "" })}>
-              <option value="">Select a PG</option>
+              <option value="">{pgsQuery.isLoading ? "Loading your properties…" : "Select a PG"}</option>
               {(pgsQuery.data?.pgs ?? []).map((pg) => <option key={pg.id} value={pg.id}>{pg.name}</option>)}
             </Select>
           </Field>
@@ -468,9 +478,18 @@ export default function OwnerResidents() {
         }
       >
         <div className="space-y-3">
-          <Field label="PG">
+          <Field
+            label="PG"
+            hint={
+              pgsQuery.isError
+                ? "Could not load your properties. Close this and try again."
+                : !pgsQuery.isLoading && !(pgsQuery.data?.pgs ?? []).length
+                  ? "You have no properties yet. Create one under My PGs first."
+                  : undefined
+            }
+          >
             <Select value={inviteForm.pgId} onChange={(event) => setInviteForm({ ...inviteForm, pgId: event.target.value, bedId: "" })}>
-              <option value="">Select a PG</option>
+              <option value="">{pgsQuery.isLoading ? "Loading your properties…" : "Select a PG"}</option>
               {(pgsQuery.data?.pgs ?? []).map((pg) => <option key={pg.id} value={pg.id}>{pg.name}</option>)}
             </Select>
           </Field>
