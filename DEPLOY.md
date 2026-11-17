@@ -22,6 +22,26 @@ Free-tier caveats: the web service sleeps after inactivity (first load takes
 paid database or another provider before real use. Files in `UPLOADS_DIR` are
 lost when the service redeploys; use an object store for production uploads.
 
+## Database: Neon
+
+Create a project at [neon.com](https://neon.com) (free tier), pick the region closest
+to where the app will run, and copy the **connection string** from the project
+dashboard. It looks like:
+
+```
+postgresql://USER:PASSWORD@ep-xxxx-pooler.REGION.aws.neon.tech/neondb?sslmode=require
+```
+
+Use it verbatim as `DATABASE_URL` — keep `sslmode=require`, and keep the `-pooler`
+host so the app reuses connections. Apply the schema and demo data to it with:
+
+```bash
+cd server && npx prisma db push && npm run db:seed
+```
+
+Skip `db:seed` if you want an empty database; set `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+and `ADMIN_NAME` instead so the first super admin is created on boot.
+
 ## Host settings
 
 | Setting | Value |
