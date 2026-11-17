@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth, homeForRole, type Role } from "./lib/auth";
 import { AppShell, type NavItem } from "./components/layouts";
@@ -19,40 +20,42 @@ import {
 } from "./components/icons";
 import { LogoMark } from "./components/icons";
 
-import LoginPage from "./pages/auth/Login";
-import RegisterPage from "./pages/auth/Register";
-import ForgotPasswordPage from "./pages/auth/ForgotPassword";
-import OwnerPendingPage from "./pages/auth/OwnerPending";
-import JoinPage from "./pages/auth/Join";
-import NotificationsPage from "./pages/Notifications";
+// Every page is loaded on demand so the first visit ships only the shell and the
+// screen being opened, instead of all 28 screens plus the chart library.
+const LoginPage = lazy(() => import("./pages/auth/Login"));
+const RegisterPage = lazy(() => import("./pages/auth/Register"));
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPassword"));
+const OwnerPendingPage = lazy(() => import("./pages/auth/OwnerPending"));
+const JoinPage = lazy(() => import("./pages/auth/Join"));
+const NotificationsPage = lazy(() => import("./pages/Notifications"));
 
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminOwners from "./pages/admin/Owners";
-import AdminProperties from "./pages/admin/Properties";
-import AdminResidents from "./pages/admin/Residents";
-import AdminComplaints from "./pages/admin/Complaints";
-import AdminAnalytics from "./pages/admin/Analytics";
-import AdminAudit from "./pages/admin/Audit";
-import AdminSettings from "./pages/admin/Settings";
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminOwners = lazy(() => import("./pages/admin/Owners"));
+const AdminProperties = lazy(() => import("./pages/admin/Properties"));
+const AdminResidents = lazy(() => import("./pages/admin/Residents"));
+const AdminComplaints = lazy(() => import("./pages/admin/Complaints"));
+const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
+const AdminAudit = lazy(() => import("./pages/admin/Audit"));
+const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 
-import OwnerDashboard from "./pages/owner/Dashboard";
-import OwnerPgs from "./pages/owner/Pgs";
-import OwnerPgDetail from "./pages/owner/PgDetail";
-import OwnerResidents from "./pages/owner/Residents";
-import OwnerRent from "./pages/owner/Rent";
-import OwnerMenus from "./pages/owner/Menus";
-import OwnerComplaints from "./pages/owner/Complaints";
-import OwnerAnnouncements from "./pages/owner/Announcements";
-import OwnerSettings from "./pages/owner/Settings";
+const OwnerDashboard = lazy(() => import("./pages/owner/Dashboard"));
+const OwnerPgs = lazy(() => import("./pages/owner/Pgs"));
+const OwnerPgDetail = lazy(() => import("./pages/owner/PgDetail"));
+const OwnerResidents = lazy(() => import("./pages/owner/Residents"));
+const OwnerRent = lazy(() => import("./pages/owner/Rent"));
+const OwnerMenus = lazy(() => import("./pages/owner/Menus"));
+const OwnerComplaints = lazy(() => import("./pages/owner/Complaints"));
+const OwnerAnnouncements = lazy(() => import("./pages/owner/Announcements"));
+const OwnerSettings = lazy(() => import("./pages/owner/Settings"));
 
-import ResidentDashboard from "./pages/resident/Dashboard";
-import ResidentMyPg from "./pages/resident/MyPg";
-import ResidentFood from "./pages/resident/Food";
-import ResidentRent from "./pages/resident/Rent";
-import ResidentComplaints from "./pages/resident/Complaints";
-import ResidentAnnouncements from "./pages/resident/Announcements";
-import ResidentHistory from "./pages/resident/History";
-import ResidentProfile from "./pages/resident/Profile";
+const ResidentDashboard = lazy(() => import("./pages/resident/Dashboard"));
+const ResidentMyPg = lazy(() => import("./pages/resident/MyPg"));
+const ResidentFood = lazy(() => import("./pages/resident/Food"));
+const ResidentRent = lazy(() => import("./pages/resident/Rent"));
+const ResidentComplaints = lazy(() => import("./pages/resident/Complaints"));
+const ResidentAnnouncements = lazy(() => import("./pages/resident/Announcements"));
+const ResidentHistory = lazy(() => import("./pages/resident/History"));
+const ResidentProfile = lazy(() => import("./pages/resident/Profile"));
 
 const icon = (node: React.ReactNode, size = 20) => (
   <span className="[&>svg]:h-5 [&>svg]:w-5" style={{ width: size, height: size }}>
@@ -140,7 +143,8 @@ function HomeRedirect() {
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<Splash />}>
+      <Routes>
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -193,7 +197,8 @@ export default function App() {
         <Route path="profile" element={<ResidentProfile />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

@@ -578,8 +578,8 @@ export function Tabs<T extends string>({
           className={cn(
             "shrink-0 rounded-lg px-3 py-2 text-[13px] font-semibold transition",
             value === tab.value
-              ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,25,40,0.08)] ring-1 ring-inset ring-ink/[0.04]"
-              : "text-ink-muted hover:text-ink"
+              ? "bg-surface font-bold text-primary shadow-[0_1px_2px_rgba(20,25,40,0.08)] ring-1 ring-inset ring-primary/25"
+              : "text-ink-muted hover:bg-surface/60 hover:text-ink"
           )}
         >
           {tab.label}
