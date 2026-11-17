@@ -4,11 +4,12 @@
   "version": "1.0.0",
   "description": "Paying Guest accommodation management platform for owners, residents and administrators",
   "scripts": {
-    "install:all": "npm install --prefix server && npm install --prefix client",
+    "install:all": "npm install --prefix server --include=dev && npm install --prefix client --include=dev",
     "db:push": "npm run db:push --prefix server",
     "db:seed": "npm run db:seed --prefix server",
     "setup": "npm run install:all && npm run db:start && npm run db:push && npm run db:seed",
     "dev": "concurrently -n api,web -c magenta,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "postinstall": "npm run install:all",
     "build": "npm run build --prefix server && npm run build --prefix client",
     "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
     "start": "cd server && npx prisma db push --skip-generate && node dist/index.js",

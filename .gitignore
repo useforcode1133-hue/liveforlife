@@ -24,3 +24,4 @@ server/scripts/.mail-sink.json
 files/
 .logs/
 *.tsbuildinfo
+.deploy-test/
