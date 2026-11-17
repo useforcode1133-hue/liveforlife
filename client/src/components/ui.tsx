@@ -14,6 +14,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, CheckCircle2, ChevronDown, Loader2, Moon, Search, Sun, Upload, X } from "lucide-react";
 import { api } from "../lib/api";
 
@@ -312,17 +313,25 @@ export function Modal({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+  // Rendered into <body> through a portal: page content animates with a
+  // transform, which would otherwise trap position:fixed inside <main> and push
+  // the dialog under the sticky header.
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
       <button
-        className="absolute inset-0 cursor-default bg-ink/40 backdrop-blur-[2px]"
+        className="fixed inset-0 cursor-default bg-[#07080D]/55 backdrop-blur-sm dark:bg-black/70"
         onClick={onClose}
         aria-label="Close dialog"
         tabIndex={-1}
       />
       <div
         className={cn(
-          "relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface p-5 ring-1 ring-ink/10 animate-slide-in sm:rounded-3xl sm:p-6",
+          "relative z-10 max-h-[calc(100dvh-1.5rem)] w-full overflow-y-auto rounded-3xl bg-surface p-5 ring-1 ring-ink/10 animate-slide-in sm:max-h-[calc(100dvh-3rem)] sm:p-6",
           size === "sm" && "sm:max-w-md",
           size === "md" && "sm:max-w-lg",
           size === "lg" && "sm:max-w-2xl"
@@ -342,7 +351,8 @@ export function Modal({
         {children}
         {footer ? <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

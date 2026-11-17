@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
-import { Badge, Card, EmptyState, ErrorNote, PageHeader, SearchField, Select, Skeleton, StatusBadge } from "../../components/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, ApiError } from "../../lib/api";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorNote,
+  PageHeader,
+  SearchField,
+  Select,
+  Skeleton,
+  StatusBadge,
+  useToast,
+} from "../../components/ui";
 import { ResidentsIcon } from "../../components/icons";
 import { formatDate, inr } from "../../lib/format";
 
@@ -26,6 +38,24 @@ export default function AdminResidents() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-residents", status],
     queryFn: () => api.get<{ residents: ResidentRow[] }>(`/admin/residents?status=${status}`),
+  });
+
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  const setAccountStatus = useMutation({
+    mutationFn: ({ id, next }: { id: string; next: "ACTIVE" | "SUSPENDED" }) =>
+      api.patch<{ message: string }>(`/admin/users/${id}/status`, { status: next }),
+    onSuccess: async (_result, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-residents"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-owners"] }),
+      ]);
+      toast.push(variables.next === "SUSPENDED" ? "Account suspended." : "Account reactivated.");
+    },
+    onError: (mutationError) =>
+      toast.push(mutationError instanceof ApiError ? mutationError.message : "Could not update this account.", "error"),
   });
 
   const rows = (data?.residents ?? []).filter((row) => {
@@ -71,6 +101,7 @@ export default function AdminResidents() {
                   <th className="px-4 py-3 font-bold">Rent</th>
                   <th className="px-4 py-3 font-bold">Joined</th>
                   <th className="px-4 py-3 font-bold">Status</th>
+                  <th className="px-4 py-3 text-right font-bold">Account</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,6 +110,7 @@ export default function AdminResidents() {
                     <td className="px-4 py-3">
                       <p className="font-semibold">{row.resident.name}</p>
                       <p className="text-[11px] text-ink-muted">{row.resident.email}</p>
+                      {row.resident.status === "SUSPENDED" ? <Badge tone="red" className="mt-1">Suspended</Badge> : null}
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium">{row.pgName}</p>
@@ -91,6 +123,21 @@ export default function AdminResidents() {
                     <td className="px-4 py-3 font-semibold">{inr(row.monthlyRent)}</td>
                     <td className="px-4 py-3 text-ink-muted">{formatDate(row.joinedAt ?? row.resident.createdAt)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant={row.resident.status === "SUSPENDED" ? "secondary" : "danger"}
+                        loading={setAccountStatus.isPending && setAccountStatus.variables?.id === row.resident.id}
+                        onClick={() =>
+                          setAccountStatus.mutate({
+                            id: row.resident.id,
+                            next: row.resident.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
+                          })
+                        }
+                      >
+                        {row.resident.status === "SUSPENDED" ? "Reactivate" : "Suspend"}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -113,6 +160,20 @@ export default function AdminResidents() {
                   {row.bedLabel ? <Badge tone="gray">Bed {row.bedLabel}</Badge> : null}
                 </div>
                 <p className="mt-2 text-[11px] text-ink-muted">Joined {formatDate(row.joinedAt ?? row.resident.createdAt)}</p>
+                <Button
+                  size="sm"
+                  variant={row.resident.status === "SUSPENDED" ? "secondary" : "danger"}
+                  className="mt-3"
+                  loading={setAccountStatus.isPending && setAccountStatus.variables?.id === row.resident.id}
+                  onClick={() =>
+                    setAccountStatus.mutate({
+                      id: row.resident.id,
+                      next: row.resident.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
+                    })
+                  }
+                >
+                  {row.resident.status === "SUSPENDED" ? "Reactivate account" : "Suspend account"}
+                </Button>
               </Card>
             ))}
           </div>

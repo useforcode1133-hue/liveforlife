@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Plus, Send, UserPlus } from "lucide-react";
+import { Copy, Download, Plus, Send, UserPlus, X } from "lucide-react";
 import { api, ApiError } from "../../lib/api";
 import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   EmptyState,
   ErrorNote,
   Field,
@@ -83,6 +84,8 @@ export default function OwnerResidents() {
   const [transferBed, setTransferBed] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<InvitationRow | null>(null);
+  const [exporting, setExporting] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -171,6 +174,29 @@ export default function OwnerResidents() {
     onError: (mutationError) => setFormError(mutationError instanceof ApiError ? mutationError.message : "Could not create the invitation."),
   });
 
+  const cancelInvitation = useMutation({
+    mutationFn: (id: string) => api.del<{ message: string }>(`/owner/invitations/${id}`),
+    onSuccess: async () => {
+      await refreshAll();
+      setCancelTarget(null);
+      toast.push("Invitation cancelled. The bed is free again.");
+    },
+    onError: (mutationError) =>
+      toast.push(mutationError instanceof ApiError ? mutationError.message : "Could not cancel the invitation.", "error"),
+  });
+
+  const exportResidents = async () => {
+    setExporting(true);
+    try {
+      await api.download(`/owner/residents-export${pgFilter ? `?pgId=${pgFilter}` : ""}`, "residents.csv");
+      toast.push("Residents exported as a CSV file.");
+    } catch (exportError) {
+      toast.push(exportError instanceof ApiError ? exportError.message : "Could not export residents.", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const updateResidency = useMutation({
     mutationFn: (payload: { id: string; data: Record<string, unknown>; path?: string }) =>
       api.post(`/owner/residents/${payload.id}/${payload.path ?? ""}`, payload.data),
@@ -193,6 +219,14 @@ export default function OwnerResidents() {
         subtitle="Allocate beds, invite new residents and manage moves."
         actions={
           <>
+            <Button
+              variant="secondary"
+              onClick={() => void exportResidents()}
+              loading={exporting}
+              icon={<Download className="h-4 w-4" />}
+            >
+              Export
+            </Button>
             <Button variant="secondary" onClick={() => setInviteOpen(true)} icon={<Send className="h-4 w-4" />}>
               Invite
             </Button>
@@ -304,6 +338,16 @@ export default function OwnerResidents() {
                   >
                     Copy link
                   </Button>
+                  {invitation.status === "PENDING" ? (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      icon={<X className="h-3.5 w-3.5" />}
+                      onClick={() => setCancelTarget(invitation)}
+                    >
+                      Cancel
+                    </Button>
+                  ) : null}
                 </div>
               </Card>
             ))
@@ -414,6 +458,20 @@ export default function OwnerResidents() {
           {formError ? <p className="error-text">{formError}</p> : null}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={() => cancelTarget && cancelInvitation.mutate(cancelTarget.id)}
+        loading={cancelInvitation.isPending}
+        title="Cancel this invitation?"
+        description={
+          cancelTarget
+            ? `Code ${cancelTarget.code} for ${cancelTarget.pgName} room ${cancelTarget.roomNumber ?? "—"} will stop working and the bed becomes free to invite again.`
+            : ""
+        }
+        confirmLabel="Cancel invitation"
+      />
 
       {/* Temporary password */}
       <Modal

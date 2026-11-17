@@ -518,15 +518,77 @@ router.delete(
   })
 );
 
+const csvCell = (value: unknown) => {
+  if (value === null || value === undefined) return "";
+  const text = String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const csvDate = (value: Date | null) => (value ? value.toISOString().slice(0, 10) : "");
+
 router.get(
   "/residents-export",
   ah(async (req, res) => {
+    const query = parse(
+      z.object({ pgId: z.string().optional(), status: z.string().optional() }),
+      req.query
+    );
     const rows = await prisma.residency.findMany({
-      where: { pg: { ownerId: req.user!.id } },
-      include: residentInclude,
-      orderBy: { createdAt: "desc" },
+      where: {
+        pg: { ownerId: req.user!.id },
+        ...(query.pgId ? { pgId: query.pgId } : {}),
+        ...(query.status && query.status !== "ALL" ? { status: query.status } : {}),
+      },
+      include: { ...residentInclude, pg: { select: { name: true } } },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });
-    res.json({ rows: rows.map((r) => mapResidency(r as never)) });
+
+    const table = [
+      [
+        "Resident",
+        "Email",
+        "Phone",
+        "PG",
+        "Floor",
+        "Room",
+        "Bed",
+        "Status",
+        "Monthly rent",
+        "Security deposit",
+        "Joined",
+        "Vacated",
+        "Notice date",
+        "Exit reason",
+      ],
+      ...rows.map((row) => [
+        row.resident.name,
+        row.resident.email,
+        row.resident.phone ?? "",
+        row.pg.name,
+        row.floor.name,
+        row.room.number,
+        row.bed?.label ?? "",
+        row.status,
+        row.monthlyRent,
+        row.securityDeposit,
+        csvDate(row.joinedAt),
+        csvDate(row.vacatedAt),
+        csvDate(row.noticeDate),
+        row.exitReason ?? "",
+      ]),
+    ];
+
+    await recordAudit({
+      actorId: req.user!.id,
+      action: "RESIDENTS_EXPORTED",
+      entityType: "Residency",
+      entityId: req.user!.id,
+      description: `${req.user!.name} exported ${rows.length} resident records`,
+    });
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="residents-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send("\uFEFF" + table.map((line) => line.map(csvCell).join(",")).join("\r\n"));
   })
 );
 

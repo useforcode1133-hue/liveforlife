@@ -54,12 +54,41 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return data as T;
 }
 
+async function download(path: string, fallbackName: string) {
+  const token = tokenStore.get();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, { headers });
+  } catch {
+    throw new ApiError(0, "We could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    if (response.status === 401) tokenStore.clear();
+    throw new ApiError(response.status, "Could not download that file.");
+  }
+
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="?([^";]+)"?/.exec(disposition);
+  const blobUrl = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = match?.[1] ?? fallbackName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  download,
   upload: (dataUrl: string, folder: "pg" | "rooms" | "complaints" | "avatars" | "menu") =>
     request<{ url: string }>("/uploads/image", { method: "POST", body: { dataUrl, folder } }),
 };
