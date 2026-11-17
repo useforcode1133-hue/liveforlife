@@ -7,6 +7,9 @@ export const env = {
   isProduction: process.env.NODE_ENV === "production",
   uploadsDir: process.env.UPLOADS_DIR ?? "uploads",
   publicUrl: process.env.PUBLIC_URL ?? "http://localhost:3000",
+  adminEmail: process.env.ADMIN_EMAIL ?? "",
+  adminPassword: process.env.ADMIN_PASSWORD ?? "",
+  adminName: process.env.ADMIN_NAME ?? "",
   mail: {
     host: process.env.SMTP_HOST ?? "",
     port: Number(process.env.SMTP_PORT ?? 587),

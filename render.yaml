@@ -1,0 +1,46 @@
+# One-click deploy on Render: creates the web service and a PostgreSQL
+# database, then connects them with DATABASE_URL.
+#
+# Render asks for the values marked `sync: false` while creating the blueprint:
+#   PUBLIC_URL     the https address Render shows after deploy, e.g. https://pg-manager.onrender.com
+#   CLIENT_ORIGIN  the same address
+#   ADMIN_EMAIL    your login email
+#   ADMIN_PASSWORD a password you choose (8+ characters)
+#
+# They are used to create the first super admin on the empty database.
+
+services:
+  - type: web
+    name: pg-manager
+    runtime: node
+    plan: free
+    buildCommand: npm install --prefix server --include=dev && npm install --prefix client --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: UPLOADS_DIR
+        value: uploads
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pg-manager-db
+          property: connectionString
+      - key: PUBLIC_URL
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+databases:
+  - name: pg-manager-db
+    plan: free
+    databaseName: pgmanager
+    user: pguser
