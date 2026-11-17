@@ -109,10 +109,24 @@ export default function OwnerResidents() {
     enabled: tab === "invitations" || inviteOpen,
   });
 
-  const bedsQuery = useQuery({
-    queryKey: ["available-beds", addForm.pgId || inviteForm.pgId],
-    queryFn: () => api.get<{ beds: BedOption[] }>(`/owner/pgs/${addForm.pgId || inviteForm.pgId}/available-beds`),
-    enabled: Boolean(addForm.pgId || inviteForm.pgId),
+  // Each form keeps its own bed list: one shared key made the invite dialog show
+  // the beds of whichever PG the add form had selected.
+  const addBedsQuery = useQuery({
+    queryKey: ["available-beds", addForm.pgId],
+    queryFn: () => api.get<{ beds: BedOption[] }>(`/owner/pgs/${addForm.pgId}/available-beds`),
+    enabled: Boolean(addForm.pgId),
+  });
+
+  const inviteBedsQuery = useQuery({
+    queryKey: ["available-beds", inviteForm.pgId],
+    queryFn: () => api.get<{ beds: BedOption[] }>(`/owner/pgs/${inviteForm.pgId}/available-beds`),
+    enabled: Boolean(inviteForm.pgId),
+  });
+
+  const transferBedsQuery = useQuery({
+    queryKey: ["available-beds", selected?.pgId],
+    queryFn: () => api.get<{ beds: BedOption[] }>(`/owner/pgs/${selected?.pgId}/available-beds`),
+    enabled: Boolean(selected?.pgId) && selected?.status !== "VACATED",
   });
 
   const detailQuery = useQuery({
@@ -208,9 +222,22 @@ export default function OwnerResidents() {
     onError: (mutationError) => toast.push(mutationError instanceof ApiError ? mutationError.message : "Could not update.", "error"),
   });
 
-  const beds = (bedsQuery.data?.beds ?? []).filter((bed) => !bed.reserved);
+  const addBeds = (addBedsQuery.data?.beds ?? []).filter((bed) => !bed.reserved);
+  const inviteBeds = (inviteBedsQuery.data?.beds ?? []).filter((bed) => !bed.reserved);
+  const transferBeds = (transferBedsQuery.data?.beds ?? []).filter((bed) => !bed.reserved);
   const rows = data?.residents ?? [];
-  const currentPgBeds = beds.filter((bed) => !inviteForm.pgId || bed.id);
+
+  const closeAdd = () => {
+    setAddOpen(false);
+    setFormError(null);
+    setAddForm({ pgId: "", bedId: "", name: "", email: "", phone: "", monthlyRent: "", deposit: "0" });
+  };
+
+  const closeInvite = () => {
+    setInviteOpen(false);
+    setFormError(null);
+    setInviteForm({ pgId: "", bedId: "", email: "", phone: "", monthlyRent: "" });
+  };
 
   return (
     <div>
@@ -358,13 +385,13 @@ export default function OwnerResidents() {
       {/* Add resident */}
       <Modal
         open={addOpen}
-        onClose={() => { setAddOpen(false); setFormError(null); }}
+        onClose={closeAdd}
         title="Add a resident"
         description="Create an account and allocate a bed in one step."
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={closeAdd}>Cancel</Button>
             <Button loading={addResident.isPending} onClick={() => addResident.mutate()} disabled={!addForm.pgId || !addForm.bedId || !addForm.name || !addForm.email || !addForm.monthlyRent}>
               Add and allocate
             </Button>
@@ -378,17 +405,25 @@ export default function OwnerResidents() {
               {(pgsQuery.data?.pgs ?? []).map((pg) => <option key={pg.id} value={pg.id}>{pg.name}</option>)}
             </Select>
           </Field>
-          <Field label="Available bed" className="sm:col-span-2" hint={addForm.pgId && !beds.length ? "No free beds in this PG. Free a bed or add a room first." : undefined}>
+          <Field
+            label="Available bed"
+            className="sm:col-span-2"
+            hint={
+              addForm.pgId && !addBedsQuery.isLoading && !addBeds.length
+                ? "No free beds in this PG. Free a bed or add a room first."
+                : undefined
+            }
+          >
             <Select
               value={addForm.bedId}
               onChange={(event) => {
-                const bed = beds.find((item) => item.id === event.target.value);
+                const bed = addBeds.find((item) => item.id === event.target.value);
                 setAddForm({ ...addForm, bedId: event.target.value, monthlyRent: bed ? String(bed.rentPerBed) : addForm.monthlyRent });
               }}
-              disabled={!addForm.pgId}
+              disabled={!addForm.pgId || addBedsQuery.isLoading}
             >
-              <option value="">Select a bed</option>
-              {beds.map((bed) => (
+              <option value="">{addBedsQuery.isLoading && addForm.pgId ? "Loading beds…" : "Select a bed"}</option>
+              {addBeds.map((bed) => (
                 <option key={bed.id} value={bed.id}>
                   {bed.floorName} · Room {bed.roomNumber} · Bed {bed.label} · {inr(bed.rentPerBed)}
                 </option>
@@ -420,12 +455,12 @@ export default function OwnerResidents() {
       {/* Invite */}
       <Modal
         open={inviteOpen}
-        onClose={() => { setInviteOpen(false); setFormError(null); }}
+        onClose={closeInvite}
         title="Invite a resident"
         description="Pick a free bed and share the code. The resident accepts it from their own account."
         footer={
           <>
-            <Button variant="secondary" onClick={() => setInviteOpen(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={closeInvite}>Cancel</Button>
             <Button loading={createInvite.isPending} onClick={() => createInvite.mutate()} disabled={!inviteForm.pgId || !inviteForm.bedId}>
               Create invitation
             </Button>
@@ -439,10 +474,17 @@ export default function OwnerResidents() {
               {(pgsQuery.data?.pgs ?? []).map((pg) => <option key={pg.id} value={pg.id}>{pg.name}</option>)}
             </Select>
           </Field>
-          <Field label="Free bed">
-            <Select value={inviteForm.bedId} onChange={(event) => setInviteForm({ ...inviteForm, bedId: event.target.value })} disabled={!inviteForm.pgId}>
-              <option value="">Select a bed</option>
-              {currentPgBeds.map((bed) => (
+          <Field
+            label="Free bed"
+            hint={inviteForm.pgId && !inviteBedsQuery.isLoading && !inviteBeds.length ? "No free beds in this PG." : undefined}
+          >
+            <Select
+              value={inviteForm.bedId}
+              onChange={(event) => setInviteForm({ ...inviteForm, bedId: event.target.value })}
+              disabled={!inviteForm.pgId || inviteBedsQuery.isLoading}
+            >
+              <option value="">{inviteBedsQuery.isLoading && inviteForm.pgId ? "Loading beds…" : "Select a bed"}</option>
+              {inviteBeds.map((bed) => (
                 <option key={bed.id} value={bed.id}>
                   {bed.floorName} · Room {bed.roomNumber} · Bed {bed.label}
                 </option>
@@ -533,11 +575,20 @@ export default function OwnerResidents() {
               <div className="space-y-3 rounded-xl border border-ink/5 p-3">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Transfer to another bed</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <Select value={transferBed} onChange={(event) => setTransferBed(event.target.value)}>
-                    <option value="">Select a free bed in this PG</option>
-                    {(invitationsQuery.data?.invitations.length ? beds : beds)
-                      .filter((bed) => bed.id !== selected.id)
-                      .map((bed) => (
+                  <Select
+                    value={transferBed}
+                    onChange={(event) => setTransferBed(event.target.value)}
+                    disabled={transferBedsQuery.isLoading || !transferBeds.length}
+                  >
+                    <option value="">
+                      {transferBedsQuery.isLoading
+                        ? "Loading free beds…"
+                        : transferBeds.length
+                          ? "Select a free bed in this PG"
+                          : "No free beds to move to"
+                      }
+                    </option>
+                    {transferBeds.map((bed) => (
                         <option key={bed.id} value={bed.id}>
                           {bed.floorName} · Room {bed.roomNumber} · Bed {bed.label}
                         </option>
