@@ -23,3 +23,4 @@ server/scripts/.mail-sink.json
 # chat screenshots and local run logs
 files/
 .logs/
+*.tsbuildinfo
