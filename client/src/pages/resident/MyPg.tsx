@@ -123,7 +123,7 @@ export default function ResidentMyPg({ initialSection = "details" }: { initialSe
               <InfoRow label="Room amenities" value={residency.amenities.join(", ") || "—"} />
               <InfoRow label="Owner" value={owner ? `${owner.name} · ${owner.phone ?? owner.email}` : "—"} />
               {pg.emergencyName ? (
-                <a href={`tel:${pg.emergencyPhone ?? ""}`} className="mt-3 flex items-center gap-2 rounded-xl bg-danger/5 px-3 py-2 text-[13px] font-semibold text-[#141928]">
+                <a href={`tel:${pg.emergencyPhone ?? ""}`} className="mt-3 flex items-center gap-2 rounded-xl bg-danger/5 px-3 py-2 text-[13px] font-semibold text-ink">
                   <Phone className="h-4 w-4" /> Emergency: {pg.emergencyName} · {pg.emergencyPhone}
                 </a>
               ) : null}
@@ -174,7 +174,7 @@ export default function ResidentMyPg({ initialSection = "details" }: { initialSe
             <Card>
               <CardHeader title="House rules" icon={<SecurityIcon size={22} />} />
               <p className="whitespace-pre-line text-[13px] leading-relaxed text-ink-soft">{pg.houseRules || "No house rules listed."}</p>
-              {pg.notice ? <p className="mt-3 rounded-xl bg-sun/15 px-3 py-2 text-[12px] text-[#141928]">{pg.notice}</p> : null}
+              {pg.notice ? <p className="mt-3 rounded-xl bg-sun/15 px-3 py-2 text-[12px] text-ink">{pg.notice}</p> : null}
             </Card>
             <Card>
               <CardHeader title="Timings" subtitle="Water, laundry and cleaning" />

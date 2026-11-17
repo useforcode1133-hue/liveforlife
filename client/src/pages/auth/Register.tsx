@@ -113,7 +113,7 @@ export default function RegisterPage() {
         </div>
 
         {formError ? (
-          <div className="rounded-xl border border-danger/20 bg-danger/5 px-3.5 py-2.5 text-[13px] font-medium text-[#141928]" role="alert">
+          <div className="rounded-xl border border-danger/20 bg-danger/5 px-3.5 py-2.5 text-[13px] font-medium text-ink" role="alert">
             {formError}
           </div>
         ) : null}
@@ -128,7 +128,7 @@ export default function RegisterPage() {
           </Link>
         </p>
         {role === "PG_OWNER" ? (
-          <p className="rounded-xl bg-sun/15 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#141928]">
+          <p className="rounded-xl bg-sun/15 px-3.5 py-2.5 text-[12px] leading-relaxed text-ink">
             Owner accounts are reviewed by an administrator before properties go live.
           </p>
         ) : null}

@@ -31,7 +31,9 @@ const buttonStyles: Record<ButtonVariant, string> = {
     "bg-surface text-ink ring-1 ring-inset ring-ink/[0.09] shadow-[0_1px_2px_rgba(20,25,40,0.04)] hover:text-primary hover:ring-primary/30",
   ghost: "bg-transparent text-ink-soft hover:bg-ink/[0.06] hover:text-ink",
   danger:
-    "bg-ink text-white ring-1 ring-inset ring-white/10 shadow-[0_10px_24px_-12px_rgba(20,25,40,0.9)] hover:bg-ink/90",
+    // ink and canvas swap places between themes, so the label always contrasts
+    // with the fill: white on near-black in light, near-black on white in dark.
+    "bg-ink text-canvas ring-1 ring-inset ring-ink/10 shadow-[0_10px_24px_-12px_rgba(20,25,40,0.9)] hover:bg-ink/90",
   success:
     "bg-ocean text-white ring-1 ring-inset ring-white/15 shadow-[0_10px_24px_-12px_rgba(78,101,246,0.85)] hover:brightness-[1.06]",
 };

@@ -22,7 +22,7 @@ export default {
         surface: "rgb(var(--surface) / <alpha-value>)",
         success: "#4E65F6",
         warning: "#5B5CE6",
-        danger: "#141928",
+        danger: "rgb(var(--ink) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],

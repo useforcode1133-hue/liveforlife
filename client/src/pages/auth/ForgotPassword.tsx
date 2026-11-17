@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
       )}
 
       {message ? <p className="mt-4 rounded-xl bg-mint/15 px-3.5 py-2.5 text-[13px] text-[#4E65F6]">{message}</p> : null}
-      {error ? <p className="mt-4 rounded-xl bg-danger/5 px-3.5 py-2.5 text-[13px] text-[#141928]">{error}</p> : null}
+      {error ? <p className="mt-4 rounded-xl bg-danger/5 px-3.5 py-2.5 text-[13px] text-ink">{error}</p> : null}
 
       <p className="mt-6 text-center text-[13px] text-ink-muted">
         <Link to="/login" className="font-semibold text-primary hover:underline">
