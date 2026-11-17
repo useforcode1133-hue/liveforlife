@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import { useId, type SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number; title?: string };
 
@@ -245,17 +245,23 @@ export const BuildingScene = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
-export const LogoMark = ({ size = 36 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-    <rect width="40" height="40" rx="12" fill="url(#pgGradient)" />
-    <path d="M11 22.5 20 15l9 7.5V29a1.5 1.5 0 0 1-1.5 1.5H12.5A1.5 1.5 0 0 1 11 29v-6.5Z" fill="#fff" fillOpacity="0.95" />
-    <path d="M17 30.5V24h6v6.5" fill="#4E65F6" />
-    <circle cx="28.5" cy="12" r="4" fill="#D9FA64" />
-    <defs>
-      <linearGradient id="pgGradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#4E65F6" />
-        <stop offset="1" stopColor="#5B5CE6" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+export const LogoMark = ({ size = 36 }: { size?: number }) => {
+  // A unique id per instance: several logos share a page, and duplicate SVG
+  // gradient ids make the fill resolve to another (often hidden) copy, which
+  // leaves the mark without its blue tile.
+  const gradientId = useId().replace(/:/g, "");
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <rect width="40" height="40" rx="12" fill={`url(#${gradientId})`} />
+      <path d="M11 22.5 20 15l9 7.5V29a1.5 1.5 0 0 1-1.5 1.5H12.5A1.5 1.5 0 0 1 11 29v-6.5Z" fill="#fff" fillOpacity="0.95" />
+      <path d="M17 30.5V24h6v6.5" fill="#4E65F6" />
+      <circle cx="28.5" cy="12" r="4" fill="#D9FA64" />
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#4E65F6" />
+          <stop offset="1" stopColor="#5B5CE6" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
