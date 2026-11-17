@@ -428,7 +428,7 @@ export default function OwnerPgDetail() {
                                 key={bed.id}
                                 className={cn(
                                   "flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold",
-                                  bed.occupied ? "bg-white text-ink shadow-sm" : "border border-dashed border-ink/20 text-ink-muted"
+                                  bed.occupied ? "bg-surface text-ink shadow-sm" : "border border-dashed border-ink/20 text-ink-muted"
                                 )}
                                 title={bed.residentName ?? "Available"}
                               >
@@ -440,15 +440,15 @@ export default function OwnerPgDetail() {
                           </div>
 
                           <div className="mt-3 flex items-center gap-1">
-                            <button onClick={() => openRoomModal(floor.id, room)} className="flex-1 rounded-lg bg-white/70 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-white">
+                            <button onClick={() => openRoomModal(floor.id, room)} className="flex-1 rounded-lg bg-surface/70 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-surface">
                               Edit
                             </button>
-                            <button onClick={() => void toggleMaintenance(room)} className="rounded-lg bg-white/70 p-1.5 text-ink-muted transition hover:bg-white hover:text-warning" aria-label="Toggle maintenance">
+                            <button onClick={() => void toggleMaintenance(room)} className="rounded-lg bg-surface/70 p-1.5 text-ink-muted transition hover:bg-surface hover:text-warning" aria-label="Toggle maintenance">
                               <Wrench className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => setConfirmDelete({ type: "room", id: room.id, label: `Room ${room.number}` })}
-                              className="rounded-lg bg-white/70 p-1.5 text-ink-muted transition hover:bg-white hover:text-danger"
+                              className="rounded-lg bg-surface/70 p-1.5 text-ink-muted transition hover:bg-surface hover:text-danger"
                               aria-label={`Delete room ${room.number}`}
                             >
                               <Trash2 className="h-3.5 w-3.5" />

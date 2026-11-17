@@ -95,7 +95,7 @@ export default function JoinPage() {
             <div className="relative h-32 bg-gradient-to-br from-primary to-ocean">
               {preview.pg.image ? <img src={preview.pg.image} alt="" className="h-full w-full object-cover opacity-90" /> : null}
               <div className="absolute inset-x-4 bottom-3 flex items-end justify-between">
-                <div className="rounded-xl bg-white/95 px-3 py-2 backdrop-blur">
+                <div className="rounded-xl bg-surface/95 px-3 py-2 backdrop-blur">
                   <p className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Invitation</p>
                   <p className="text-sm font-extrabold">{preview.pg.name}</p>
                 </div>

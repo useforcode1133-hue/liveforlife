@@ -61,7 +61,7 @@ export default function AdminResidents() {
         <EmptyState icon={<ResidentsIcon size={32} />} title="No residents found" description="Try a different status or search term." />
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-2xl border border-ink/5 bg-white shadow-soft lg:block">
+          <div className="hidden overflow-hidden rounded-2xl border border-ink/5 bg-surface shadow-soft lg:block">
             <table className="w-full text-left text-[13px]">
               <thead className="bg-canvas text-[11px] uppercase tracking-wide text-ink-muted">
                 <tr>

@@ -86,7 +86,7 @@ export default function RegisterPage() {
             onClick={() => setValue("role", option.value, { shouldValidate: true })}
             className={cn(
               "rounded-2xl border-2 p-3.5 text-left transition",
-              role === option.value ? "border-primary bg-primary/5" : "border-ink/10 bg-white hover:border-primary/30"
+              role === option.value ? "border-primary bg-primary/5" : "border-ink/10 bg-surface hover:border-primary/30"
             )}
           >
             <span className="mb-2 block">{option.icon}</span>

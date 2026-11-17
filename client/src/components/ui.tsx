@@ -13,7 +13,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
-import { AlertCircle, CheckCircle2, ChevronDown, Loader2, Search, Upload, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronDown, Loader2, Moon, Search, Sun, Upload, X } from "lucide-react";
 import { api } from "../lib/api";
 
 export const cn = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(" ");
@@ -27,7 +27,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-brand text-white ring-1 ring-inset ring-white/15 shadow-[0_10px_24px_-12px_rgba(91,71,224,0.85)] hover:brightness-[1.06] active:translate-y-px",
   secondary:
-    "bg-white text-ink ring-1 ring-inset ring-ink/[0.09] shadow-[0_1px_2px_rgba(20,25,40,0.04)] hover:text-primary hover:ring-primary/30",
+    "bg-surface text-ink ring-1 ring-inset ring-ink/[0.09] shadow-[0_1px_2px_rgba(20,25,40,0.04)] hover:text-primary hover:ring-primary/30",
   ghost: "bg-transparent text-ink-soft hover:bg-ink/[0.06] hover:text-ink",
   danger:
     "bg-ink text-white ring-1 ring-inset ring-white/10 shadow-[0_10px_24px_-12px_rgba(20,25,40,0.9)] hover:bg-ink/90",
@@ -119,12 +119,12 @@ export type Tone = "purple" | "blue" | "green" | "amber" | "coral" | "gray" | "r
 
 const tones: Record<Tone, string> = {
   purple: "bg-primary/10 text-primary",
-  blue: "bg-primary-light text-ink",
-  green: "bg-lime text-ink",
-  amber: "bg-canvas text-ink-muted",
+  blue: "bg-primary-light text-[#141928]",
+  green: "bg-lime text-[#141928]",
+  amber: "bg-canvas text-ink-soft dark:bg-white/[0.06] dark:text-ink-soft",
   coral: "bg-primary-light/70 text-ocean",
-  gray: "bg-canvas text-ink-muted",
-  red: "bg-ink text-white",
+  gray: "bg-canvas text-ink-soft dark:bg-white/[0.06] dark:text-ink-soft",
+  red: "bg-ink text-canvas dark:bg-white/[0.09] dark:text-ink dark:ring-1 dark:ring-inset dark:ring-white/10",
   pink: "bg-primary-light/70 text-ocean",
 };
 
@@ -319,7 +319,7 @@ export function Modal({
       />
       <div
         className={cn(
-          "relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-lift animate-slide-in sm:rounded-3xl sm:p-6",
+          "relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface p-5 ring-1 ring-ink/10 animate-slide-in sm:rounded-3xl sm:p-6",
           size === "sm" && "sm:max-w-md",
           size === "md" && "sm:max-w-lg",
           size === "lg" && "sm:max-w-2xl"
@@ -578,7 +578,7 @@ export function Tabs<T extends string>({
           className={cn(
             "shrink-0 rounded-lg px-3 py-2 text-[13px] font-semibold transition",
             value === tab.value
-              ? "bg-white text-ink shadow-[0_1px_2px_rgba(20,25,40,0.08)] ring-1 ring-inset ring-ink/[0.04]"
+              ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,25,40,0.08)] ring-1 ring-inset ring-ink/[0.04]"
               : "text-ink-muted hover:text-ink"
           )}
         >
@@ -596,6 +596,61 @@ export function InfoRow({ label, value }: { label: string; value: ReactNode }) {
       <span className="text-[13px] text-ink-muted">{label}</span>
       <span className="text-right text-[13px] font-semibold text-ink">{value || "—"}</span>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------- Theme switch */
+
+export function ThemeToggle({ className, withLabel }: { className?: string; withLabel?: boolean }) {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("pg-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const active = stored === "dark" || (!stored && prefersDark);
+    setDark(active);
+    document.documentElement.classList.toggle("dark", active);
+  }, []);
+
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("pg-theme", next ? "dark" : "light");
+  };
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      aria-label="Dark mode"
+      onClick={toggle}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-xl bg-surface px-2 py-1.5 ring-1 ring-inset ring-ink/[0.08] transition hover:ring-primary/30",
+        className
+      )}
+    >
+      <span
+        className={cn(
+          "relative flex h-6 w-11 shrink-0 items-center rounded-full p-[3px] transition-colors",
+          dark ? "bg-primary" : "bg-ink/15"
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-[18px] w-[18px] items-center justify-center rounded-full bg-white text-[9px] shadow-sm transition-transform",
+            dark ? "translate-x-5" : "translate-x-0"
+          )}
+          aria-hidden
+        >
+          {dark ? <Moon className="h-2.5 w-2.5 text-primary" /> : <Sun className="h-2.5 w-2.5 text-ink-muted" />}
+        </span>
+      </span>
+      {withLabel ? (
+        <span className="pr-1 text-[12.5px] font-semibold text-ink-soft">{dark ? "Dark" : "Light"}</span>
+      ) : null}
+    </button>
   );
 }
 
@@ -632,9 +687,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             className={cn(
               "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lift animate-pop-in",
-              toast.tone === "success" && "bg-lime text-ink",
-              toast.tone === "error" && "bg-ink",
-              toast.tone === "info" && "bg-primary"
+              toast.tone === "success" && "bg-primary text-white",
+              toast.tone === "error" && "bg-ink text-canvas",
+              toast.tone === "info" && "bg-ocean text-white"
             )}
           >
             {toast.tone === "error" ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}

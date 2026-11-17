@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, LogOut, Menu, X, CheckCheck, ChevronRight } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Avatar, Badge, Button, cn, EmptyState, statusLabel } from "./ui";
+import { Avatar, Badge, Button, cn, EmptyState, statusLabel, ThemeToggle } from "./ui";
 import { BuildingScene, LogoMark } from "./icons";
 import { relativeTime } from "../lib/format";
 
@@ -56,7 +56,7 @@ function NotificationPanel({ open, onClose }: { open: boolean; onClose: () => vo
   return (
     <>
       <button className="fixed inset-0 z-40 cursor-default" onClick={onClose} aria-label="Close notifications" tabIndex={-1} />
-      <div className="fixed inset-x-3 top-16 z-50 max-h-[75vh] overflow-hidden rounded-2xl bg-white shadow-lift ring-1 ring-ink/[0.08] animate-pop-in sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
+      <div className="fixed inset-x-3 top-16 z-50 max-h-[75vh] overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-ink/[0.08] animate-pop-in sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
         <div className="flex items-center justify-between border-b border-ink/5 px-4 py-3">
           <div>
             <p className="text-sm font-bold">Notifications</p>
@@ -138,10 +138,10 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
 
   return (
     <div className="min-h-screen bg-canvas">
-      <aside className="fixed inset-y-3 left-3 z-30 hidden w-[248px] flex-col overflow-hidden rounded-3xl bg-white/85 shadow-float ring-1 ring-ink/[0.06] backdrop-blur-xl lg:flex">
+      <aside className="fixed inset-y-3 left-3 z-30 hidden w-[248px] flex-col overflow-hidden rounded-3xl bg-surface/85 shadow-float ring-1 ring-ink/[0.06] backdrop-blur-xl lg:flex">
         <span className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-primary/20 blur-3xl" aria-hidden />
         <span className="pointer-events-none absolute -left-16 bottom-10 h-40 w-40 rounded-full bg-teal/15 blur-3xl" aria-hidden />
-        <div className="relative mx-3 mt-4 flex items-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/[0.10] via-white to-ocean/[0.08] px-3.5 py-3.5 ring-1 ring-inset ring-ink/[0.06]">
+        <div className="relative mx-3 mt-4 flex items-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/[0.10] via-surface to-ocean/[0.08] px-3.5 py-3.5 ring-1 ring-inset ring-ink/[0.06]">
           <span className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-primary/15 blur-2xl" aria-hidden />
           <LogoMark size={34} />
           <div className="min-w-0">
@@ -160,8 +160,8 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
                 cn(
                   "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-semibold transition",
                   isActive
-                    ? "bg-white text-primary shadow-[0_1px_2px_rgba(20,25,40,0.05),0_8px_18px_-14px_rgba(20,25,40,0.4)] ring-1 ring-inset ring-primary/15"
-                    : "text-ink-soft hover:bg-white/70 hover:text-ink"
+                    ? "bg-surface text-primary shadow-[0_1px_2px_rgba(20,25,40,0.05),0_8px_18px_-14px_rgba(20,25,40,0.4)] ring-1 ring-inset ring-primary/15"
+                    : "text-ink-soft hover:bg-surface/70 hover:text-ink"
                 )
               }
             >
@@ -206,10 +206,11 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
               <span className="text-[15px] font-extrabold">PG Manager</span>
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <ThemeToggle />
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen((open) => !open)}
-                  className="relative rounded-xl bg-white p-2.5 text-ink-soft shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] transition hover:text-primary hover:ring-primary/30"
+                  className="relative rounded-xl bg-surface p-2.5 text-ink-soft shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] transition hover:text-primary hover:ring-primary/30"
                   aria-label="Notifications"
                   aria-expanded={notificationsOpen}
                 >
@@ -224,14 +225,14 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
               </div>
               <Link
                 to={accountPath}
-                className="hidden items-center gap-2 rounded-xl bg-white px-3 py-1.5 shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] transition hover:ring-primary/25 sm:flex"
+                className="hidden items-center gap-2 rounded-xl bg-surface px-3 py-1.5 shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] transition hover:ring-primary/25 sm:flex"
               >
                 <Avatar name={user.name} src={user.avatarUrl} size={28} />
                 <span className="max-w-[120px] truncate text-[13px] font-semibold">{user.name.split(" ")[0]}</span>
               </Link>
               <button
                 onClick={() => setMobileNavOpen(true)}
-                className="rounded-xl bg-white p-2.5 text-ink-soft shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] lg:hidden"
+                className="rounded-xl bg-surface p-2.5 text-ink-soft shadow-[0_1px_2px_rgba(20,25,40,0.05)] ring-1 ring-inset ring-ink/[0.08] lg:hidden"
                 aria-label="Open menu"
               >
                 <Menu style={{ width: 18, height: 18 }} />
@@ -246,7 +247,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
       </div>
 
       <nav
-        className="fixed inset-x-3 bottom-3 z-30 rounded-2xl bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-float ring-1 ring-ink/[0.06] backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-3 bottom-3 z-30 rounded-2xl bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-float ring-1 ring-ink/[0.06] backdrop-blur-xl lg:hidden"
         aria-label="Primary"
       >
         <div className="flex items-stretch justify-around px-1">
@@ -290,7 +291,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <button className="absolute inset-0 bg-ink/40" onClick={() => setMobileNavOpen(false)} aria-label="Close menu" tabIndex={-1} />
-          <div className="absolute inset-y-0 right-0 w-[82%] max-w-sm overflow-y-auto rounded-l-3xl bg-white p-5 shadow-lift animate-slide-in">
+          <div className="absolute inset-y-0 right-0 w-[82%] max-w-sm overflow-y-auto rounded-l-3xl bg-surface p-5 shadow-lift animate-slide-in">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Avatar name={user.name} src={user.avatarUrl} size={40} />
@@ -382,7 +383,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <BuildingScene className="h-[168px] w-[300px] max-w-full opacity-95" />
         </div>
       </div>
-      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
+      <div className="relative flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-10">
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <ThemeToggle withLabel />
+        </div>
         <div className="w-full max-w-md">{children}</div>
       </div>
     </div>

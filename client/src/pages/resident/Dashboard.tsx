@@ -145,7 +145,7 @@ export default function ResidentDashboard() {
               <BuildingIcon size={16} /> {residency.pg.name} · Room {residency.roomNumber} · {residency.floorName}
             </p>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
+          <div className="flex items-center gap-3 rounded-2xl bg-surface/15 px-4 py-3 backdrop-blur">
             <div>
               <p className="text-[11px] text-white/70">This month's rent</p>
               <p className="text-lg font-extrabold">{inr(rent?.amountDue ?? residency.monthlyRent)}</p>
@@ -153,7 +153,7 @@ export default function ResidentDashboard() {
             <StatusBadge status={rent?.status ?? "PENDING"} />
           </div>
         </div>
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-surface/10" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -236,7 +236,7 @@ export default function ResidentDashboard() {
                     void navigator.clipboard.writeText(residency.pg.wifiPassword ?? "");
                     toast.push("Wi-Fi password copied.");
                   }}
-                  className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-primary shadow-sm"
+                  className="flex items-center gap-1 rounded-lg bg-surface px-2 py-1 text-[11px] font-semibold text-primary shadow-sm"
                 >
                   <Copy className="h-3 w-3" /> Copy
                 </button>

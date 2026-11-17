@@ -71,7 +71,7 @@ export default function OwnerDashboard() {
         />
         <div className="relative flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.09] px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/80 ring-1 ring-inset ring-white/15">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/[0.09] px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/80 ring-1 ring-inset ring-white/15">
               Owner workspace
             </span>
             <h1 className="mt-4 max-w-lg text-[30px] font-extrabold leading-[1.08] tracking-[-0.03em] !text-white sm:text-[38px]">
@@ -84,20 +84,20 @@ export default function OwnerDashboard() {
             <div className="mt-6 flex flex-wrap items-center gap-2.5">
               <Link
                 to="/owner/pgs?new=1"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-[13px] font-bold text-ink shadow-[0_10px_30px_-16px_rgba(0,0,0,0.8)] transition hover:bg-white/90"
+                className="inline-flex items-center gap-2 rounded-2xl bg-surface px-4 py-2.5 text-[13px] font-bold text-ink shadow-[0_10px_30px_-16px_rgba(0,0,0,0.8)] transition hover:bg-surface/90"
               >
                 <Plus className="h-4 w-4" /> Add a property
               </Link>
               <Link
                 to="/owner/rent"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-2.5 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-white/[0.14]"
+                className="inline-flex items-center gap-2 rounded-2xl bg-surface/[0.08] px-4 py-2.5 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-surface/[0.14]"
               >
                 Record rent <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-4 rounded-3xl bg-white/[0.06] p-4 ring-1 ring-inset ring-white/10 backdrop-blur-sm">
+          <div className="flex shrink-0 items-center gap-4 rounded-3xl bg-surface/[0.06] p-4 ring-1 ring-inset ring-white/10 backdrop-blur-sm">
             <div className="relative grid h-[92px] w-[92px] place-items-center">
               <svg viewBox="0 0 100 100" className="h-[92px] w-[92px] -rotate-90" aria-hidden>
                 <defs>

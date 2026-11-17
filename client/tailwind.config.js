@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -12,8 +13,13 @@ export default {
         blush: { DEFAULT: "#CBE4FF", light: "#EAF3FF" },
         teal: { DEFAULT: "#4E65F6", light: "#CBE4FF" },
         lime: { DEFAULT: "#D9FA64", light: "#F4FCDD" },
-        ink: { DEFAULT: "#141928", soft: "#2F3648", muted: "#64748B" },
-        canvas: "#F5F7FA",
+        ink: {
+          DEFAULT: "rgb(var(--ink) / <alpha-value>)",
+          soft: "rgb(var(--ink-soft) / <alpha-value>)",
+          muted: "rgb(var(--ink-muted) / <alpha-value>)",
+        },
+        canvas: "rgb(var(--canvas) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
         success: "#4E65F6",
         warning: "#5B5CE6",
         danger: "#141928",
@@ -39,7 +45,7 @@ export default {
         "brand-warm": "linear-gradient(120deg, #4E65F6 0%, #5B5CE6 48%, #D9FA64 100%)",
         aurora:
           "radial-gradient(circle at 10% 6%, rgba(78,101,246,0.42) 0%, transparent 48%), radial-gradient(circle at 88% 10%, rgba(203,228,255,0.22) 0%, transparent 46%), radial-gradient(circle at 62% 98%, rgba(217,250,100,0.18) 0%, transparent 54%)",
-        "brand-soft": "linear-gradient(135deg, rgba(91,71,224,0.10) 0%, rgba(61,130,246,0.10) 100%)",
+        "brand-soft": "linear-gradient(135deg, rgba(78,101,246,0.10) 0%, rgba(203,228,255,0.30) 100%)",
         mesh: "radial-gradient(circle at 15% 10%, #5B5CE6 0%, transparent 55%), radial-gradient(circle at 88% 82%, #CBE4FF 0%, transparent 58%)",
       },
       keyframes: {
