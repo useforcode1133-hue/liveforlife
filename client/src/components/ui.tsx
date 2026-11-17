@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -567,8 +568,36 @@ export function Tabs<T extends string>({
   value: T;
   onChange: (value: T) => void;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  const activeIndex = tabs.findIndex((tab) => tab.value === value);
+
+  // Measure the selected tab so one shared pill can slide to it instead of each
+  // tab drawing its own background.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const el = list.querySelectorAll<HTMLButtonElement>('[role="tab"]')[activeIndex];
+      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [activeIndex, tabs.length]);
+
   return (
-    <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto rounded-xl bg-ink/[0.05] p-1 ring-1 ring-inset ring-ink/[0.04]" role="tablist">
+    <div
+      ref={listRef}
+      className="no-scrollbar relative -mx-1 flex gap-1 overflow-x-auto rounded-xl bg-ink/[0.05] p-1 ring-1 ring-inset ring-ink/[0.04]"
+      role="tablist"
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-1 left-0 rounded-lg bg-lime shadow-[0_1px_2px_rgba(20,25,40,0.12)] transition-[transform,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-primary"
+        style={{ width: pill?.width ?? 0, transform: `translateX(${pill?.left ?? 0}px)` }}
+      />
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -576,14 +605,16 @@ export function Tabs<T extends string>({
           aria-selected={value === tab.value}
           onClick={() => onChange(tab.value)}
           className={cn(
-            "shrink-0 rounded-lg px-3 py-2 text-[13px] font-semibold transition",
+            "relative z-10 shrink-0 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors",
             value === tab.value
-              ? "bg-surface font-bold text-primary shadow-[0_1px_2px_rgba(20,25,40,0.08)] ring-1 ring-inset ring-primary/25"
-              : "text-ink-muted hover:bg-surface/60 hover:text-ink"
+              ? "text-primary dark:text-lime"
+              : "text-ink-muted hover:bg-surface/60 hover:text-ink dark:hover:bg-surface/40"
           )}
         >
           {tab.label}
-          {tab.count !== undefined ? <span className="ml-1.5 text-xs text-ink-muted">{tab.count}</span> : null}
+          {tab.count !== undefined ? (
+            <span className="ml-1.5 text-xs opacity-70">{tab.count}</span>
+          ) : null}
         </button>
       ))}
     </div>
